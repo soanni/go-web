@@ -1,0 +1,1 @@
+docker build -t go-web/pgsql:9.6.4-1 -f Dockerfile.windows .

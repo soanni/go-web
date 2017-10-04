@@ -1,0 +1,21 @@
+# escape=`
+FROM microsoft/windowsservercore:10.0.14393.1358
+
+LABEL maintainer="Andrey Solodov <andrey.solodov@aurea.com>" `
+    com.trilogy.company=aurea `
+    com.trilogy.team=MS.DockerProduction `
+    com.trilogy.product=go-web `
+    com.trilogy.service=pgsql `
+    com.trilogy.stage=dev `
+    com.trilogy.maintainer.skype=andrey.solodov_1 `
+    com.trilogy.maintainer.email=andrey.solodov@aurea.com
+
+RUN powershell.exe -Command `
+  $ErrorActionPreference = 'Stop'; `
+  (New-Object System.Net.WebClient).DownloadFile('https://get.enterprisedb.com/postgresql/postgresql-9.6.4-1-windows-x64.exe','c:\postgresql-installer.exe') ; `
+  Start-Process c:\postgresql-installer.exe -ArgumentList '--mode unattended --superpassword password' -Wait ; `
+  Remove-Item c:\postgresql-installer.exe -Force
+
+COPY ["pg_hba.conf", "c:/program files/postgresql/9.6/data/"]
+
+RUN ["cmd"]
