@@ -1,0 +1,22 @@
+# escape=`
+FROM golang:1.9.1-windowsservercore
+
+LABEL maintainer="Andrey Solodov <andrey.solodov@aurea.com>" `
+    com.trilogy.company=aurea `
+    com.trilogy.team=MS.DockerProduction `
+    com.trilogy.product=go-web `
+    com.trilogy.service=chitchat `
+    com.trilogy.stage=dev `
+    com.trilogy.maintainer.skype=andrey.solodov_1 `
+    com.trilogy.maintainer.email=andrey.solodov@aurea.com
+
+EXPOSE 8000
+
+COPY chitchat/ ./src/go-web/ch02/chitchat
+
+WORKDIR ./src/go-web/ch02/chitchat
+
+RUN go get -v ; `
+ go build -v
+
+CMD ["./chitchat"]

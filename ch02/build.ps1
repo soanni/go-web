@@ -1,0 +1,1 @@
+docker build -t go-web/chitchat:0.1 -f Dockerfile.chitchat.windows .
