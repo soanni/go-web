@@ -10,12 +10,43 @@ LABEL maintainer="Andrey Solodov <andrey.solodov@aurea.com>" `
     com.trilogy.maintainer.skype=andrey.solodov_1 `
     com.trilogy.maintainer.email=andrey.solodov@aurea.com
 
-RUN powershell.exe -Command `
-  $ErrorActionPreference = 'Stop'; `
-  (New-Object System.Net.WebClient).DownloadFile('https://get.enterprisedb.com/postgresql/postgresql-9.6.4-1-windows-x64.exe','c:\postgresql-installer.exe') ; `
-  Start-Process c:\postgresql-installer.exe -ArgumentList '--mode unattended --superpassword password' -Wait ; `
-  Remove-Item c:\postgresql-installer.exe -Force
 
-COPY ["pg_hba.conf", "c:/program files/postgresql/9.6/data/"]
+SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
-RUN ["cmd"]
+ENV PGDATA c:\\sql
+ENV PGPORT 5432
+#not using PGUSER here due to need to run createuser downstream to create role
+ENV PGUSERVAR postgres
+ENV PGDOWNLOADVER postgresql-9.5.9-1-windows-x64-binaries.zip
+
+# download and extract binaries
+RUN md c:\\sql; `
+    wget http://get.enterprisedb.com/postgresql/$env:PGDOWNLOADVER -outfile $env:PGDOWNLOADVER ; `
+    expand-archive $env:PGDOWNLOADVER -force -destinationpath /postgresql ; `
+    rm $env:PGDOWNLOADVER
+
+#install VC 2013 runtime required by postgresql
+#use chocolatey pkg mgr to facilitate command-line installations
+RUN iex ((new-object net.webclient).DownloadString('https://chocolatey.org/install.ps1'))
+RUN choco install vcredist2013 -y
+
+# copy dependent script(s)
+#COPY ./assets/init-config-start-service.ps1 /install/
+#COPY ./assets/start.ps1 /install/
+#COPY ./assets/entrypoint.ps1 /install/
+COPY ./assets/ /install/
+
+WORKDIR /postgresql/pgsql/bin
+#WORKDIR /install
+
+CMD /install/entrypoint
+
+# init postgresql db cluster, config and create and start service
+# RUN /install/init-config-start-service.ps1 $env:PGDATA $env:PGUSERVAR
+
+# start postgreSQL using the designated data dir
+# CMD /install/start.ps1 detached $env:PGDATA $env:PGUSERVAR
+
+EXPOSE 5432
+
+VOLUME ["C:\\sql"]

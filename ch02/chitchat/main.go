@@ -1,50 +1,41 @@
 package main
 
 import (
-	"html/template"
 	"net/http"
+	"time"
 )
 
-func index(w http.ResponseWriter, r *http.Request) {
-	threads, err := data.Threads()
-	if err == nil {
-		_, err := session(w, r)
-		//public_tmpl_files := []string{"templates/layout.html", "templates/public.navbar.html", "templates/index.html"}
-		//private_tmpl_files := []string{"templates/layout.html", "templates/private.navbar.html", "templates/index.html"}
-		//var templates *template.Template
-		if err != nill {
-			generateHTML(w, threads, "layout", "public.navbar", "index")
-			//templates = template.Must(template.ParseFiles(private_tmpl_files...))
-		} else {
-			generateHTML(w, threads, "layout", "private.navbar", "index")
-			//templates = template.Must(template.ParseFiles(public_tmpl_files...))
-		}
-		//templates.ExecuteTemplate(w, "layout", threads)
-	}
-}
-
 func main() {
+	p("ChitChat", version(), "started at", config.Address)
+
 	mux := http.NewServeMux()
-	files := http.FileServer(http.Dir("/public"))
+	files := http.FileServer(http.Dir(config.Static))
 	mux.Handle("/static/", http.StripPrefix("/static/", files))
 
+	// route_main.go
 	mux.HandleFunc("/", index)
+	// route_main.go
 	mux.HandleFunc("/err", err)
 
+	// route_auth.go
 	mux.HandleFunc("/login", login)
 	mux.HandleFunc("/logout", logout)
 	mux.HandleFunc("/signup", signup)
 	mux.HandleFunc("/signup_account", signupAccount)
 	mux.HandleFunc("/authenticate", authenticate)
 
+	// route_thread.go
 	mux.HandleFunc("/thread/new", newThread)
 	mux.HandleFunc("/thread/create", createThread)
 	mux.HandleFunc("/thread/post", postThread)
 	mux.HandleFunc("/thread/read", readThread)
 
 	server := &http.Server{
-		Addr:    "0.0.0.0:8000",
-		Handler: mux,
+		Addr:           config.Address,
+		Handler:        mux,
+		ReadTimeout:    time.Duration(config.ReadTimeout * int64(time.Second)),
+		WriteTimeout:   time.Duration(config.WriteTimeout * int64(time.Second)),
+		MaxHeaderBytes: 1 << 20,
 	}
 	server.ListenAndServe()
 }
